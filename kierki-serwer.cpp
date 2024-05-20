@@ -62,17 +62,19 @@ int main(int argc, char *argv[]) {
                 break;
         }
     }
-    if (!file.empty() && timeout >= 0) {
-        if (read_file(file, &modes, &hands) == 1){
-            fprintf(stderr, "Couldn't open the file.\n");
-            return 1;
-        }
+    if (!file.empty() && timeout > 0) {
         // TODO if (!port_arg.empty()) {
         bool error = false;
         uint16_t port = read_port(port_arg, &error);
         if (error){  // There was an error getting port.
             return 1;
         }
+
+        if (read_file(file, &modes, &hands) == 1){
+            fprintf(stderr, "Couldn't open the file.\n");
+            return 1;
+        }
+
         // Create socket.
         int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
         if (socket_fd < 0) {  // There was an error creating a socket.
@@ -109,6 +111,46 @@ int main(int argc, char *argv[]) {
         string x;
         x = tcp_read(client_fd);
         cout << x << " od klienta\n";
+        tcp_write(client_fd, "DEAL6N2H3H4H5H6D2DQSKSAS10H10S10D10C\r\n");
+        tcp_write(client_fd, "TRICK110H\r\n");
+
+        x = tcp_read(client_fd);
+
+        cout << x << " " << x.size() << " od klienta\n";
+        tcp_write(client_fd, "TAKEN110C4C2C3CN\r\n");
+
+        tcp_write(client_fd, "TRICK210H\r\n");
+        x = tcp_read(client_fd);
+        tcp_write(client_fd, "WRONG2\r\n");
+        cout << x << " " << x.size() << " od klienta\n";
+
+
+        tcp_write(client_fd, "TRICK210H\r\n");
+        x = tcp_read(client_fd);
+        cout << x << " " << x.size() << " od klienta\n";
+        tcp_write(client_fd, "TAKEN210C4C2C3CN\r\n");
+
+
+
+        tcp_write(client_fd, "TRICK310H\r\n");
+
+        x = tcp_read(client_fd);
+        cout << x << " " << x.size() << " od klienta\n";
+        tcp_write(client_fd, "TAKEN310C4C2C3CN\r\n");
+
+        tcp_write(client_fd, "TRICK410H\r\n");
+        x = tcp_read(client_fd);
+        cout << x << " " << x.size() << " od klienta\n";
+        tcp_write(client_fd, "TAKEN410C4C2C3CN\r\n");
+
+        tcp_write(client_fd, "TRICK10C\r\n");
+
+        tcp_write(client_fd, "TRICK5QH\r\n");
+        x = tcp_read(client_fd);
+
+        cout << x << " " << x.size() << " od klienta\n";
+        tcp_write(client_fd, "TAKEN510C4C2C3CN\r\n");
+
         close(socket_fd);
     }
     else {
