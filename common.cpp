@@ -1,9 +1,5 @@
 #include "common.h"
 
-#include <string>
-#include <vector>
-
-
 // Creates port.
 uint16_t read_port(string string, bool *error) {
     char *endptr;
@@ -15,20 +11,14 @@ uint16_t read_port(string string, bool *error) {
     return (uint16_t) port;
 }
 
-
+// TODO continue write rework.
 // Sends messages using TCP protocol.
 int tcp_write(const int socket_fd, string data){
-    uint32_t to_write = data.size();  // Size to write.
-    uint32_t written = 0;      // Already sent bytes.
-    while (to_write > 0){
-        ssize_t done = write(socket_fd, &data[written], to_write);
-        if (done <= 0){  // Error while sending.
-            return 1;
-        }
-        written += done;
-        to_write -= done;
+    ssize_t done = write(socket_fd, &data, data.size());
+    if (done <= 0){  // Error while sending.
+        return -1;
     }
-    return 0;
+    return done;
 }
 
 
