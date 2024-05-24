@@ -26,4 +26,4 @@ int tcp_write(int socket_fd, string data);
 
 
 // Reading while tcp.
-string tcp_read(int socket_fd);
+string tcp_read(int socket_fd, bool onr, uint8_t* ret);

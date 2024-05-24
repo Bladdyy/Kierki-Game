@@ -161,21 +161,7 @@ int play_turn(int socketfd, set<string> hand, bool automat) {
                     while (!okay) {
                         cin >> play;
                         // TODO Zawsze można skorzystać z cards i tricks (nie blokuje komunikacja z serwerem.)
-                        if (play == "cards") {
-                            print_cards(hand);
-                            cout << "\n";
-                        }
-                        else if (play == "tricks") {
-                            cout << "tricks\n";
-                        }
-                        else if(play[0] == '!') {
-                            play = play.substr(1, play.size() - 1);
-                            set<string> card;
-                            int get = get_cards(&card, play);
-                            if (get == 0 && card.size() == 1 &&  hand.find(*card.begin()) != hand.end()) {
-                                okay = true;
-                            }
-                        }
+
                     }
                 }
                 string msg("TRICK");
@@ -210,13 +196,36 @@ int play_turn(int socketfd, set<string> hand, bool automat) {
     return 0;
 }
 
+
+int determine_action(int situation) {
+    if (situation == 1) {
+
+    }
+    return 0;
+}
+int get_message() {
+    ssize_t read_new = read(socket_fd, &let, 1);
+    if (read_new <= 0) {
+        return "";
+    }
+    if (let == '\r') {
+        got = 1;
+    }
+    else if (let == '\n' && got == 1) {
+        got = 2;
+    }
+    else {
+        msg += let;
+        got = 0;
+    }
+}
+
 int main(int const argc, char* argv[]) {
     string host;           // Host address.
     string port_arg;       // Port number.
     int version = 0;       // Version of IP.
     char dir = 'X';        // Direction of place at the table
     bool automat = false;  // Enables automatic player.
-
     // Getting option arguments.
     char get;
     while ((get = getopt(argc, argv, ":h:p:46NESWa")) != -1){
@@ -252,7 +261,6 @@ int main(int const argc, char* argv[]) {
                 break;
         }
     }
-
     // If requested arguments were given.
     if (!host.empty() && !port_arg.empty() && dir != 'X'){
         bool error = false;  // Checks for error in functions.
@@ -271,21 +279,23 @@ int main(int const argc, char* argv[]) {
             fprintf(stderr,"ERROR: Couldn't create a socket\n");
             return 1;
         }
-        if (fcntl(socket_fd, F_SETFL, O_NONBLOCK) == -1) {  // Setting socket to be non-blocking.
-            fprintf(stderr, "ERROR: Couldn't set non-blocking socket.\n");
-            return 1;
-        }
 
-        // Connecting to the server.
-        // if (connect(socket_fd, (struct sockaddr *) &server_address, (socklen_t) sizeof(server_address)) < 0) {
-        //     fprintf(stderr, "ERROR: Couldn't connect to the server.\n");
+        // TODO Nieblokujący socket nie działa ;((
+        // if (fcntl(socket_fd, F_SETFL, O_NONBLOCK) == -1) {  // Setting socket to be non-blocking.
+        //     fprintf(stderr, "ERROR: Couldn't set non-blocking socket.\n");
         //     return 1;
         // }
+        // Connecting to the server.
+        if (connect(socket_fd, (struct sockaddr *) &server_address, (socklen_t) sizeof(server_address)) < 0) {
+            fprintf(stderr, "ERROR: Couldn't connect to the server.\n");
+            return 1;
+        }
 
         string message("IAM");  // First message to send to the server.
         message += dir;
         message += term;
-        int to_send = message.size();  // Size of the message.
+        uint8_t to_send = message.size();  // Size of the message.
+        string reciever;
 
         set<string> hand;  // Cards in hand.
         struct pollfd poll_descriptors[2];
@@ -293,7 +303,8 @@ int main(int const argc, char* argv[]) {
         poll_descriptors[0].events = POLLOUT;   // Looking for space to write to the server.
         poll_descriptors[1].fd = STDIN_FILENO;  // STDIN descriptor.
         poll_descriptors[1].events = POLLIN;    // Waiting for message from STDIN.
-        int check = 0;  // TODO: Wywalenie check.
+        bool check = false;  // TODO: Wywalenie check.
+        bool waiting = false;
         do {
             for (int i = 0; i < 2; ++i) {  // Setting revents to zero.
                 poll_descriptors[i].revents = 0;
@@ -304,30 +315,59 @@ int main(int const argc, char* argv[]) {
             }
             else if (actions > 0) {  // Any event detected.
                 if (poll_descriptors[0].revents & POLLOUT) {  // Client is able to write.
-                    int written = tcp_write(socket_fd, message);
-                    if (written <= 0) {  // TODO: ERROR HANDLING?.
+                    ssize_t done = write(socket_fd, &message, to_send);
+                    if (done <= 0) {
                         fprintf(stderr, "ERROR: Writing\n");
+                        return 1;
                     }
-                    else {
-                        to_send -= written;
-                    }
+                    to_send -= done;
                     if (to_send == 0) {
                         poll_descriptors[0].events = POLLIN;
                     }
+                    else {
+                        message = message.substr(done, message.size() - done);
+                    }
                 }
-
-
+                else if (poll_descriptors[0].revents & POLLOUT) {
+                    uint8_t ret = 0;
+                    if (!reciever.empty() && reciever.back() == '\r') {
+                        string recv = tcp_read(socket_fd, true, &ret);
+                        reciever += recv;
+                    }
+                    if (ret == 2) {
+                        fprintf(stderr, "ERROR: Couldn't read message.\n");
+                        return 1;
+                    }
+                    if (ret == 1) {
+                        int code = determine_action(1);
+                        if (code < 0) {
+                            return 1;
+                        }
+                    }
+                }
                 if (poll_descriptors[1].revents & POLLIN) {
                     string recv;
                     size_t size = 0;
                     getline(cin, recv);
-                    cout << "this " << recv << "\n";
-                    check++;
+                    if (recv == "cards") {
+                        print_cards(hand);
+                        check = true;
+                        cout << "\n";
+                    }
+                    else if (recv == "tricks") {
+                        cout << "tricks\n";
+                    }
+                    else if(recv == "!" && waiting) {
+                        recv = recv.substr(1, recv.size() - 1);
+                        set<string> card;
+                        int get = get_cards(&card, recv);
+                        // if (get == 0 && card.size() == 1 &&  hand.find(*card.begin()) != hand.end()) {
+                        //     okay = true;
+                        // }
+                    }
                 }
             }
-        } while (check < 3);
-        // sit_down(socket_fd, dir, &hand);
-        // play_turn(socket_fd, hand, automat);
+        } while (!check);
         close(socket_fd);
     }
     else{

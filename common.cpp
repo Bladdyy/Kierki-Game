@@ -15,33 +15,39 @@ uint16_t read_port(string string, bool *error) {
 // Sends messages using TCP protocol.
 int tcp_write(const int socket_fd, string data){
     ssize_t done = write(socket_fd, &data, data.size());
-    if (done <= 0){  // Error while sending.
-        return -1;
-    }
     return done;
 }
 
 
 // Receives messages using TCP protocol.
-string tcp_read(const int socket_fd){
-    int got = 0;
+string tcp_read(const int socket_fd, bool onr, uint8_t *ret){
+    int got;
+    if (onr) {
+        got = 1;
+    }
+    else {
+        got = 0;
+    }
     char let;
     string msg;
-    while (got < 2) {
-        ssize_t read_new = read(socket_fd, &let, 1);
-        if (read_new <= 0) {
-            return "";
+    ssize_t read_new;
+    do {
+        read_new = read(socket_fd, &let, 1);
+        if (read_new < 0) {
+            *ret = 2;
+            got = 2;
         }
-        if (let == '\r') {
+        else if (let == '\r') {
             got = 1;
         }
         else if (let == '\n' && got == 1) {
             got = 2;
+            *ret = 1;
         }
         else {
             msg += let;
             got = 0;
         }
-    }
+    } while (got < 2 && read_new > 0);
     return msg;
 }
