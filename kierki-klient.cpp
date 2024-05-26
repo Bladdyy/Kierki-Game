@@ -75,38 +75,25 @@ int get_cards(set<string> *cards, string answer) {
     }
     return 0;
 }
+uint8_t get_lewa(string answer, uint8_t lewa) {
+    string str_lewa = to_string(lewa);
+    if (lewa > 9 && answer.size() >= 2 && str_lewa[0] == answer[0] && str_lewa[1] == answer[1]) {
+        return 0;
+    }
+    if (lewa <= 9 && !answer.empty() && str_lewa[0] == answer[0]) {
+        return 0;
+    }
+    return 1;
+}
 
+// TODO popraw accept.size() z 6, bo lewa nie musi być jednocyfrowa.
 
-// Reakcja na odebraną kartę.
-
-// bool passed = false;
-// while(!passed) {
-//     string accept = tcp_read(socketfd);
-//     // TODO popraw accept.size() z 6, bo lewa nie musi być jednocyfrowa.
-//     if (accept.size() == 6 && accept.substr(0, 5) == "WRONG" && accept[5] == lewa - 1 + '0') {
-//         lewa--;
-//         repeat = true;
-//         passed = true;
-//         cout << "Wrong message received in trick " << accept[5] << ".\n";
-//     }
-//     else if (accept.size() > 7 && accept.substr(0, 5) == "TAKEN" && accept[5] == lewa - 1 + '0' && (accept.back() == 'N' || accept.back() == 'E' || accept.back() == 'S' || accept.back() == 'W')) {
-//         *lewa = *lewa + 1;
-//         set<string> taken;
-//         int got = get_cards(&taken, accept.substr(6, accept.size() - 7));
-//         if (got == 0 && taken.size() == 4) {
-//             hand.erase(play);
-//             passed = true;
-//             repeat = false;
-//             cout << "A trick " << accept[5] << " is taken by " << accept.back()<< ", cards ";
-//             print_cards(taken);
-//             cout << ".\n";
-//         }
-//     }
-// }
-
-void play_card(set<string> hand, bool automat, string answer, uint8_t* action, string *played) {
+// Odbiera komunikat 'TRICK' oraz jeśli automat ma wartość true, to zagrywa kartę. hand - ręka gracza,
+// automat - gracz automatyczny, answer - komunikat odebrany od serwera, action - ID następnego spodziewanego komunikatu,
+// played - zagrana karta, waiting - oczekiwanie na kartę od gracza nieautomatycznego.
+void play_card(set<string> hand, bool automat, string answer, uint8_t* action, string *played, bool* waiting) {
     set<string> cards;
-    int get = get_cards(&cards, answer.substr(6, answer.size() - 6));
+    int get = get_cards(&cards, answer.substr(6, answer.size() - 6));  // Odbiera
     if (get == 0 && cards.size() < 4) {
         cout << "Trick: " << answer[5] << " ";
         print_cards(cards);
@@ -127,20 +114,68 @@ void play_card(set<string> hand, bool automat, string answer, uint8_t* action, s
                 }
             }
             *played = play;
-            *action = 5;
+        }
+        else {
+            *waiting = true;
         }
         *action = 4;
     }
 }
 
 
-uint8_t determine_action(uint8_t *action, string answer, set<string> *real_hand, uint8_t *lewa, string *played, bool automat) {
+uint8_t determine_action(uint8_t *action, string answer, set<string> *real_hand, uint8_t *lewa, string *played, bool automat, bool *waiting) {
     int code = 0;
-    if (*action == 2 && answer.size() >= 6 && answer[5] == *lewa + '0' && answer.substr(0, 5) == "TRICK") {
-        play_card(*real_hand, automat, answer, action, played);
+    char dirs[4] = {'N', 'E', 'S', 'W'};
+    uint8_t offset;
+    if (*lewa > 9) {
+        offset = 2;
     }
-    if (*action == 6 && answer.size() >= 6 && answer[5] == *lewa)
-    if (*action == 1 && answer.size() >= 4 && answer.substr(0, 4) == "BUSY") {
+    else {
+        offset = 1;
+    }
+    if (*action == 2 && answer.size() >= 5 + offset && get_lewa(answer.substr(5, offset), *lewa) == 0
+            && answer.substr(0, 5) == "TRICK") {
+        play_card(*real_hand, automat, answer, action, played, waiting);
+    }
+    else if (*action == 4 &&  get_lewa(answer.substr(5, offset), *lewa) == 0) {
+        if (answer.size() == 5 + offset && answer.substr(0, 5) == "WRONG") {
+            cout << "Wrong message received in trick " << *lewa << ".\n";
+            *waiting = false;
+        }
+        else if (answer.size() = 6 + offset && answer.substr(0, 5) == "TAKEN"
+                && find(begin(dirs), end(dirs), answer.back())) {
+            set<string> taken;
+            int got = get_cards(&taken, answer.substr(6, answer.size() - 7));
+            if (got == 0 && taken.size() == 4) {
+                (*real_hand).erase(*played);
+                cout << "A trick " << answer[5] << " is taken by " << answer.back()<< ", cards ";
+                print_cards(taken);
+                cout << ".\n";
+                if (*lewa == 13) {
+                    *action = 3;
+                    *lewa = 0;
+                }
+                else {
+                    *action = 2;
+                    *lewa = *lewa + 1;
+                }
+            }
+        }
+    }
+    else if ((*action == 1 || *action == 3) && answer.size() >= 6 && answer.substr(0, 4) == "DEAL" && answer[4] <= '7' && answer[4] >= '1'
+        && find(begin(dirs), end(dirs), answer[5])) {
+        set<string> hand;
+        int get = get_cards(&hand, answer.substr(6, answer.size() - 6));
+        if (get == 0 && hand.size() == 13) {
+            *real_hand = hand;
+            cout << "New deal " << answer[4] << " staring place " << answer[5] << ", your cards: ";
+            print_cards(hand);
+            cout<< ".\n";
+            *action = 2;
+            *lewa = 1;
+        }
+    }
+    else if (*action == 1 && answer.size() >= 4 && answer.substr(0, 4) == "BUSY") {
         set<char> places;
         bool miss = false;
         for (char el: answer.substr(4, answer.size() - 4)) {
@@ -162,19 +197,6 @@ uint8_t determine_action(uint8_t *action, string answer, set<string> *real_hand,
             }
             code = 1;
             cout << response << ".\n";
-        }
-    }
-    if ((*action == 1 && *action == 3) && answer.size() >= 6 && answer.substr(0, 4) == "DEAL" && answer[4] <= '7' && answer[4] >= '1'
-            && (answer[5] == 'N' || answer[5] == 'E' || answer[5] == 'S' || answer[5] == 'W')) {
-        set<string> hand;
-        int get = get_cards(&hand, answer.substr(6, answer.size() - 6));
-        if (get == 0 && hand.size() == 13) {
-            *real_hand = hand;
-            cout << "New deal " << answer[4] << " staring place " << answer[5] << ", your cards: ";
-            print_cards(hand);
-            cout<< ".\n";
-            *action = 2;
-            *lewa = 1;
         }
     }
     return code;
@@ -257,7 +279,9 @@ int main(int const argc, char* argv[]) {
         message += term;
         uint8_t to_send = message.size();  // Size of the message.
         string reciever;
+        string played;
         uint8_t action = 1;
+        int poll_act;
         uint8_t lewa = 0;
         set<string> hand;  // Cards in hand.
         struct pollfd poll_descriptors[2];
@@ -268,14 +292,20 @@ int main(int const argc, char* argv[]) {
         bool force_quit = false;  // TODO: Wywalenie check.
         bool waiting = false;
         do {
-            for (int i = 0; i < 2; ++i) {  // Setting revents to zero.
-                poll_descriptors[i].revents = 0;
+            if (waiting) {
+                poll_descriptors[1].revents = 0;
+                poll_act = poll(&poll_descriptors[1], 1, -1);
             }
-            int actions = poll(poll_descriptors, 2, -1);
-            if (actions == -1) {  // Poll error.
+            else {
+                for (int i = 0; i < 2; ++i) {  // Setting revents to zero.
+                    poll_descriptors[i].revents = 0;
+                }
+                poll_act = poll(poll_descriptors, 2, -1);
+            }
+            if (poll_act == -1) {  // Poll error.
                 fprintf(stderr, "ERROR: There was an error while polling.\n");
             }
-            else if (actions > 0) {  // Any event detected.
+            else if (poll_act > 0) {  // Any event detected.
                 if (poll_descriptors[0].revents & POLLOUT) {  // Client is able to write.
                     ssize_t done = write(socket_fd, &message, to_send);
                     if (done <= 0) {
@@ -290,7 +320,7 @@ int main(int const argc, char* argv[]) {
                         message = message.substr(done, message.size() - done);
                     }
                 }
-                else if (poll_descriptors[0].revents & POLLOUT) {
+                else if (poll_descriptors[0].revents & POLLIN) {
                     uint8_t ret = 0;
                     if (!reciever.empty() && reciever.back() == '\r') {
                         string recv = tcp_read(socket_fd, true, &ret);
@@ -301,7 +331,7 @@ int main(int const argc, char* argv[]) {
                         return 1;
                     }
                     if (ret == 1) {
-                        uint8_t code = determine_action(&action, reciever, &hand, &lewa);
+                        uint8_t code = determine_action(&action, reciever, &hand, &lewa, &played, automat, &waiting);
                         if (code == 1) {
                             force_quit = true;
                         }
@@ -320,12 +350,11 @@ int main(int const argc, char* argv[]) {
                         cout << "tricks\n";
                     }
                     else if(recv == "!" && waiting) {
-                        recv = recv.substr(1, recv.size() - 1);
-                        set<string> card;
-                        int get = get_cards(&card, recv);
-                        // if (get == 0 && card.size() == 1 &&  hand.find(*card.begin()) != hand.end()) {
-                        //     okay = true;
-                        // }
+                        message = recv.substr(1, recv.size() - 1);
+                        played = message;
+                        message += term;
+                        waiting = false;
+                        poll_descriptors[0].revents = POLLOUT;
                     }
                 }
             }
