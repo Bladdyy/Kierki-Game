@@ -125,7 +125,7 @@ void play_card(set<string> hand, bool automat, string answer, uint8_t* action, s
 
 uint8_t determine_action(uint8_t *action, string answer, set<string> *real_hand, uint8_t *lewa, string *played, bool automat, bool *waiting) {
     int code = 0;
-    char dirs[4] = {'N', 'E', 'S', 'W'};
+    string dirs("NESW");
     uint8_t offset;
     if (*lewa > 9) {
         offset = 2;
@@ -142,8 +142,8 @@ uint8_t determine_action(uint8_t *action, string answer, set<string> *real_hand,
             cout << "Wrong message received in trick " << *lewa << ".\n";
             *waiting = false;
         }
-        else if (answer.size() = 6 + offset && answer.substr(0, 5) == "TAKEN"
-                && find(begin(dirs), end(dirs), answer.back())) {
+        else if (answer.size() == 6 + offset && answer.substr(0, 5) == "TAKEN"
+                && dirs.find(answer.back()) != string::npos) {
             set<string> taken;
             int got = get_cards(&taken, answer.substr(6, answer.size() - 7));
             if (got == 0 && taken.size() == 4) {
@@ -163,7 +163,7 @@ uint8_t determine_action(uint8_t *action, string answer, set<string> *real_hand,
         }
     }
     else if ((*action == 1 || *action == 3) && answer.size() >= 6 && answer.substr(0, 4) == "DEAL" && answer[4] <= '7' && answer[4] >= '1'
-        && find(begin(dirs), end(dirs), answer[5])) {
+        && dirs.find(answer[5]) != string::npos) {
         set<string> hand;
         int get = get_cards(&hand, answer.substr(6, answer.size() - 6));
         if (get == 0 && hand.size() == 13) {
@@ -179,7 +179,7 @@ uint8_t determine_action(uint8_t *action, string answer, set<string> *real_hand,
         set<char> places;
         bool miss = false;
         for (char el: answer.substr(4, answer.size() - 4)) {
-            if (el == 'N' || el == 'S' || el == 'E' || el == 'S') {
+            if (dirs.find(answer.back()) != string::npos) {
                 pair<set<char>::iterator, bool> ret = places.insert(el);
                 if (!ret.second) {
                     miss = true;
