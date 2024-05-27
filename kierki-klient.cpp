@@ -1,6 +1,5 @@
-// TODO Nieblokujący socket nie działa ;((
-// TODO ogarnięcie jak robić ipv4 lub ipv6
-
+// TODO Nie działa IPv6 oraz AF_UNSPEC
+#include <fcntl.h>
 #include <iostream>
 #include <cstdio>
 #include <cstring>
@@ -403,23 +402,32 @@ int main(int const argc, char* argv[]) {
             return 1;
         }
 
+        // Choosing IP version.
+        int fam;
+        if (version == 4) {
+            fam = AF_INET;
+        }
+        else if (version == 6) {
+            fam = AF_INET6;
+        }
+        else {
+            fam = AF_UNSPEC;
+        }
+
+        // Getting server address.
         error = false;
-        struct sockaddr_in server_address = get_server_address(host, port, &error, AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        sockaddr_in server_address = get_server_address(host, port, &error, fam, SOCK_STREAM, IPPROTO_TCP);
         if (error){  // There was an error getting server address.
             fprintf(stderr, "ERROR: Couldn't get address information.\n");
             return 1;
         }
 
-        int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+        cout << server_address.sin_family << " 6:" <<  AF_INET6 <<  " 4:" << AF_INET << " UN:" << AF_UNSPEC << "\n";
+        int socket_fd = socket(fam, SOCK_STREAM, 0);
         if (socket_fd < 0) {  // There was an error creating a socket.
             fprintf(stderr,"ERROR: Couldn't create a socket\n");
             return 1;
         }
-
-        // if (fcntl(socket_fd, F_SETFL, O_NONBLOCK) == -1) {
-        //     fprintf(stderr, "ERROR: Couldn't set non-blocking socket.\n");
-        //     return 1;
-        // }
 
         // Connecting to the server.
         if (connect(socket_fd, (struct sockaddr *) &server_address, (socklen_t) sizeof(server_address)) < 0) {
@@ -427,7 +435,11 @@ int main(int const argc, char* argv[]) {
             return 1;
         }
 
-        cout << "i am accepted B)\n";
+        if (fcntl(socket_fd, F_SETFL, O_NONBLOCK) == -1) {
+            fprintf(stderr, "ERROR: Couldn't set non-blocking socket.\n");
+            return 1;
+        }
+        cout << "i am accepted B)  B)))))))))))))))))))))))))))))\n";
 
         // Creating first message to send to the server.
         string message("IAM");

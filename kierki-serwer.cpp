@@ -108,48 +108,49 @@ int main(int argc, char *argv[]) {
         if (client_fd < 0){
             fprintf(stderr, "ERROR: Couldn't connect with the client.\n");
         }
-        string x;
-        x = tcp_read(client_fd);
-        cout << x << " od klienta\n";
-        tcp_write(client_fd, "DEAL6N2H3H4H5H6D2DQSKSAS10H10S10D10C\r\n");
-        tcp_write(client_fd, "TRICK110H\r\n");
-
-        x = tcp_read(client_fd);
-
-        cout << x << " " << x.size() << " od klienta\n";
-        tcp_write(client_fd, "TAKEN110C4C2C3CN\r\n");
-
-        tcp_write(client_fd, "TRICK210H\r\n");
-        x = tcp_read(client_fd);
-        tcp_write(client_fd, "WRONG2\r\n");
-        cout << x << " " << x.size() << " od klienta\n";
-
-
-        tcp_write(client_fd, "TRICK210H\r\n");
-        x = tcp_read(client_fd);
-        cout << x << " " << x.size() << " od klienta\n";
-        tcp_write(client_fd, "TAKEN210C4C2C3CN\r\n");
-
-
-
-        tcp_write(client_fd, "TRICK310H\r\n");
-
-        x = tcp_read(client_fd);
-        cout << x << " " << x.size() << " od klienta\n";
-        tcp_write(client_fd, "TAKEN310C4C2C3CN\r\n");
-
-        tcp_write(client_fd, "TRICK410H\r\n");
-        x = tcp_read(client_fd);
-        cout << x << " " << x.size() << " od klienta\n";
-        tcp_write(client_fd, "TAKEN410C4C2C3CN\r\n");
-
-        tcp_write(client_fd, "TRICK10C\r\n");
-
-        tcp_write(client_fd, "TRICK5QH\r\n");
-        x = tcp_read(client_fd);
-
-        cout << x << " " << x.size() << " od klienta\n";
-        tcp_write(client_fd, "TAKEN510C4C2C3CN\r\n");
+        cout << "accepted\n";
+        // string x;
+        // x = tcp_read(client_fd);
+        // cout << x << " od klienta\n";
+        // tcp_write(client_fd, "DEAL6N2H3H4H5H6D2DQSKSAS10H10S10D10C\r\n");
+        // tcp_write(client_fd, "TRICK110H\r\n");
+        //
+        // x = tcp_read(client_fd);
+        //
+        // cout << x << " " << x.size() << " od klienta\n";
+        // tcp_write(client_fd, "TAKEN110C4C2C3CN\r\n");
+        //
+        // tcp_write(client_fd, "TRICK210H\r\n");
+        // x = tcp_read(client_fd);
+        // tcp_write(client_fd, "WRONG2\r\n");
+        // cout << x << " " << x.size() << " od klienta\n";
+        //
+        //
+        // tcp_write(client_fd, "TRICK210H\r\n");
+        // x = tcp_read(client_fd);
+        // cout << x << " " << x.size() << " od klienta\n";
+        // tcp_write(client_fd, "TAKEN210C4C2C3CN\r\n");
+        //
+        //
+        //
+        // tcp_write(client_fd, "TRICK310H\r\n");
+        //
+        // x = tcp_read(client_fd);
+        // cout << x << " " << x.size() << " od klienta\n";
+        // tcp_write(client_fd, "TAKEN310C4C2C3CN\r\n");
+        //
+        // tcp_write(client_fd, "TRICK410H\r\n");
+        // x = tcp_read(client_fd);
+        // cout << x << " " << x.size() << " od klienta\n";
+        // tcp_write(client_fd, "TAKEN410C4C2C3CN\r\n");
+        //
+        // tcp_write(client_fd, "TRICK10C\r\n");
+        //
+        // tcp_write(client_fd, "TRICK5QH\r\n");
+        // x = tcp_read(client_fd);
+        //
+        // cout << x << " " << x.size() << " od klienta\n";
+        // tcp_write(client_fd, "TAKEN510C4C2C3CN\r\n");
 
         close(socket_fd);
     }
