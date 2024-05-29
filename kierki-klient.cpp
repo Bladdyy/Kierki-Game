@@ -126,8 +126,8 @@ uint8_t play_card(set<string> hand, bool automat, string answer, uint8_t* action
         string play;  // Played card.
         // Picks card to play automatically.
         if (automat) {
+            play = *hand.begin();
             if (!cards.empty()) {
-                play = *hand.begin();
                 string match = *cards.begin();
                 for (string card: hand) {
                     if (card.back() == match.back()) {
@@ -137,7 +137,7 @@ uint8_t play_card(set<string> hand, bool automat, string answer, uint8_t* action
                 }
             }
             *played = play;
-            return 1;
+            return 2;
         }
         *waiting = true;  // Waiting for user to pick a card to play.
     }
@@ -151,13 +151,15 @@ uint8_t play_card(set<string> hand, bool automat, string answer, uint8_t* action
 // tricks list of tricks taken, dir - ID of seat occupied by client.
 void trick_answer(string answer, uint8_t *lewa, uint8_t offset, set<string> *real_hand,
         string *played, uint8_t *action, list<list<string>> *tricks, char dir) {
+
+    cout << answer << "hello  \n";
     // Correct 'WRONG'.
     if (answer.size() == 5 + offset && answer.substr(0, 5) == "WRONG") {
         cout << "Wrong message received in trick " << *lewa << ".\n";
         *action = 2;  // Next - receive 'TRICK'.
     }
     // Correct 'TAKEN'.
-    else if (answer.size() == 6 + offset && answer.substr(0, 5) == "TAKEN"
+    else if (answer.size() > 6 + offset && answer.substr(0, 5) == "TAKEN"
             && dirs.find(answer.back()) != string::npos) {
         set<string> taken;  // Taken cards.
         int got = get_cards(&taken, answer.substr(6, answer.size() - 7));
@@ -316,6 +318,8 @@ int busy(string answer, char dir) {
 // tricks list of tricks taken, dir - ID of seat occupied by client.
 uint8_t determine_action(uint8_t *action, string answer, set<string> *real_hand, uint8_t *lewa, string *played,
     bool automat, bool *waiting, list<list<string>> *tricks, char dir) {
+    cout << "determining" << answer << "\n";
+
     int code = 0;    // Return value.
     uint8_t offset;  // Length of number of current turn.
     if (*lewa > 9) {
@@ -422,7 +426,7 @@ int main(int const argc, char* argv[]) {
             return 1;
         }
 
-        cout << server_address.sin_family << " 6:" <<  AF_INET6 <<  " 4:" << AF_INET << " UN:" << AF_UNSPEC << "\n";
+        // Creating new socket.
         int socket_fd = socket(fam, SOCK_STREAM, 0);
         if (socket_fd < 0) {  // There was an error creating a socket.
             fprintf(stderr,"ERROR: Couldn't create a socket\n");
@@ -439,7 +443,6 @@ int main(int const argc, char* argv[]) {
             fprintf(stderr, "ERROR: Couldn't set non-blocking socket.\n");
             return 1;
         }
-        cout << "i am accepted B)  B)))))))))))))))))))))))))))))\n";
 
         // Creating first message to send to the server.
         string message("IAM");
@@ -479,7 +482,7 @@ int main(int const argc, char* argv[]) {
             }
             else if (poll_act > 0) {  // Any event detected.
                 if (poll_descriptors[0].revents & POLLOUT) {  // Client wants and is able to write.
-                    ssize_t done = write(socket_fd, &message, to_send);  // Writing as much as possible.
+                    ssize_t done = write(socket_fd, message.c_str(), to_send);  // Writing as much as possible.
                     if (done <= 0) {  // If there was an error while writing.
                         fprintf(stderr, "ERROR: There was an error while writing to server.\n");
                         return 1;
@@ -509,15 +512,16 @@ int main(int const argc, char* argv[]) {
                     if (ret == 1) {  // If whole message was read.
                         // Determines which action to do.
                         uint8_t code = determine_action(&action, receiever, &hand, &lewa, &played, automat, &waiting, &tricks, dir);
+                        receiever = "";
                         if (code == 1) {  // Action forced quit.
                             force_quit = true;
                         }
                         else if (code == 2) {  // Send automatically played card.
                             // Preparing the message to send.
                             message = played;
-                            to_send = message.size();
                             message += term;
-                            poll_descriptors[0].revents = POLLOUT;  // Send message.
+                            to_send = message.size();
+                            poll_descriptors[0].events = POLLOUT;  // Send message.
                         }
                     }
                 }

@@ -21,9 +21,5 @@ using namespace std;
 uint16_t read_port(string string, bool *error);
 
 
-// Writing while tcp.
-int tcp_write(int socket_fd, string data);
-
-
 // Reading while tcp.
 string tcp_read(int socket_fd, bool onr, uint8_t* ret);

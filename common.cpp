@@ -1,5 +1,7 @@
 #include "common.h"
 
+#include <iostream>
+
 // Creates port.
 uint16_t read_port(string string, bool *error) {
     char *endptr;
@@ -11,12 +13,6 @@ uint16_t read_port(string string, bool *error) {
     return (uint16_t) port;
 }
 
-// TODO continue write rework.
-// Sends messages using TCP protocol.
-int tcp_write(const int socket_fd, string data){
-    ssize_t done = write(socket_fd, &data, data.size());
-    return done;
-}
 
 
 // Receives messages using TCP protocol.
