@@ -128,9 +128,10 @@ int main(int argc, char *argv[]) {
         x = "TRICK210H\r\n";
         write(client_fd, x.c_str(), x.size());
         x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+
         x = "WRONG2\r\n";
         write(client_fd, x.c_str(), x.size());
-        cout << x << " " << x.size() << " od klienta\n";
 
         x = "TRICK210H\r\n";
         write(client_fd, x.c_str(), x.size());
