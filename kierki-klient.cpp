@@ -1,4 +1,6 @@
-// TODO Nie działa IPv6 oraz AF_UNSPEC
+// TODO Nie działa IPv6
+// TODO Raport z rozgrywki klient automatyczny
+// TODO obsługa nadmiernych argumentów.
 #include <fcntl.h>
 #include <iostream>
 #include <cstdio>
@@ -25,7 +27,7 @@ static struct sockaddr_in get_server_address(string host, uint16_t port, bool* e
     hints.ai_family = fam;
     hints.ai_socktype = sock;
     hints.ai_protocol = prot;
-
+    hints.ai_flags = AI_PASSIVE;
     // Getting address information.
     struct addrinfo *address_result;
     int errcode = getaddrinfo(host.c_str(), nullptr, &hints, &address_result);
@@ -35,7 +37,8 @@ static struct sockaddr_in get_server_address(string host, uint16_t port, bool* e
 
     // Updating socket address information.
     struct sockaddr_in send_address;
-    send_address.sin_family = fam;
+    send_address.sin_family = address_result->ai_family;
+    cout << AF_UNSPEC << " " << AF_INET << " " << AF_INET6 << " " << send_address.sin_family << " " << fam << "\n";
     send_address.sin_addr.s_addr =
             ((struct sockaddr_in *) (address_result->ai_addr))->sin_addr.s_addr;
     send_address.sin_port = htons(port); // Port from the command line
@@ -56,6 +59,26 @@ void print_cards(set<string> cards) {
     }
 }
 
+
+uint8_t in_hand(set<string> hand, set<string> taken, set<string> *real_hand, string played, uint8_t action) {
+    uint8_t in_hand = 0;
+    string card;
+    for (string el: taken) {
+        pair<set<string>::iterator, bool> ret = hand.insert(el);  // Trying to add to hand.
+        if (!ret.second) {  // If this card already was in hand.
+            in_hand++;
+            card = el;
+            cout << el << "\n";
+        }
+    }
+    if (in_hand == 1 && (action == 6 || card == played)) {
+        real_hand->erase(card);
+    }
+    else {
+        in_hand = 0;
+    }
+    return in_hand;
+}
 
 // Extracts card numbers from 'answer',
 int get_cards(set<string> *cards, string answer) {
@@ -152,7 +175,7 @@ uint8_t play_card(set<string> hand, bool automat, string answer, uint8_t* action
 void trick_answer(string answer, uint8_t *lewa, uint8_t offset, set<string> *real_hand,
         string *played, uint8_t *action, list<list<string>> *tricks, char dir) {
     // Correct 'WRONG'.
-    if (answer.size() == 5 + offset && answer.substr(0, 5) == "WRONG") {
+    if (answer.substr(0, 5) == "WRONG") {
         cout << "Wrong message received in trick " << to_string(*lewa) << ".\n";
         *action = 2;  // Next - receive 'TRICK'.
     }
@@ -161,9 +184,7 @@ void trick_answer(string answer, uint8_t *lewa, uint8_t offset, set<string> *rea
             && dirs.find(answer.back()) != string::npos) {
         set<string> taken;  // Taken cards.
         int got = get_cards(&taken, answer.substr(5 + offset, answer.size() - 6 - offset));
-        if (got == 0 && taken.size() == 4) {  // If there are cards.
-            (*real_hand).erase(*played);  // Erase card played by user.
-
+        if (got == 0 && taken.size() == 4 && in_hand(*real_hand, taken, real_hand, *played, *action) == 1) {  // If there are cards.
             // Add trick to the list, if taken by client.
             if (answer.back() == dir) {
                 list<string> new_trick;
@@ -173,17 +194,18 @@ void trick_answer(string answer, uint8_t *lewa, uint8_t offset, set<string> *rea
                 }
                 tricks->emplace_back(new_trick);
             }
-
             cout << "A trick " << to_string(*lewa) << " is taken by " << answer.back() << ", cards ";
             print_cards(taken);
             cout << ".\n";
             if (*lewa == 13) {
-                *lewa = 1;
+                *lewa = 0;
                 *action = 5;  // Next - receive 'SCORE' or 'TOTAL',
             }
             else {
-                *action = 2;  // Next - receive 'TRICK'.
-                *lewa = *lewa + 1;  // New turn.
+                if (*action == 4) {
+                    *action = 2;  // Next - receive 'TRICK'.
+                }
+                *lewa = *lewa + 1;
             }
         }
     }
@@ -193,7 +215,8 @@ void trick_answer(string answer, uint8_t *lewa, uint8_t offset, set<string> *rea
 
 // Handles 'SCORE' and 'TOTAL'. Displays communicate info.
 // Answer - message received from server, action - type of next message to handle.
-int scoring(string answer, uint8_t *action) {
+// Tricks - List of all taken tricks.
+int scoring(string answer, uint8_t *action, list<list<string>> *tricks) {
     int code = 0;                          // Return value.
     set<char> places;                      // Checks for four different seats.
     list<pair<char, string>> point_pairs;  // List of scores.
@@ -245,6 +268,7 @@ int scoring(string answer, uint8_t *action) {
             if (answer.substr(0, 5) == "SCORE") {
                 cout << "The scores are:\n";
                 *action = 3;  // Next - receive 'DEAL' or 'TOTAL'.
+                tricks->clear();
             }
             else {
                 cout << "The total scores are\n";
@@ -270,7 +294,12 @@ void deal(string answer, set<string> *real_hand, uint8_t *action, uint8_t *lewa)
         cout << "New deal " << answer[4] << " staring place " << answer[5] << ", your cards: ";
         print_cards(hand);
         cout<< ".\n";
-        *action = 2;  // Next - receive 'TRICK'.
+        if (*action == 1) {
+            *action = 6;  // Next - receive 'TRICK' or possible 'TAKEN'.
+        }
+        else {
+            *action = 2;  // Next - receive 'TRICK'.
+        }
         *lewa = 1;    // First turn in the round.
     }
 }
@@ -313,7 +342,8 @@ int busy(string answer, char dir) {
 // Redirects to correct function based on given variables. Action - type of next message to handle
 // Answer - message received from server, real_hand - set of client's cards, lewa - number of the turn,
 // played - last played card, automat - automatically picks card to play, waiting - waits for user input,
-// tricks list of tricks taken, dir - ID of seat occupied by client.
+// tricks list of tricks taken, dir - ID of seat occupied by client
+// by any player when client arrives to a round already in play.
 uint8_t determine_action(uint8_t *action, string answer, set<string> *real_hand, uint8_t *lewa, string *played,
     bool automat, bool *waiting, list<list<string>> *tricks, char dir) {
     int code = 0;    // Return value.
@@ -330,13 +360,13 @@ uint8_t determine_action(uint8_t *action, string answer, set<string> *real_hand,
         code = play_card(*real_hand, automat, answer, action, played, waiting, offset, lewa);
     }
     // Proper answer for playing card received was received.
-    else if (*action == 4 &&  get_lewa(answer.substr(5, offset), *lewa) == 0) {
+    else if (*action == 4 && answer.size() >= 5 + offset && get_lewa(answer.substr(5, offset), *lewa) == 0) {
         trick_answer(answer, lewa, offset, real_hand, played, action, tricks, dir);
     }
     // Proper round/game ending message was received.
-    else if (answer.size() >= 7 && ((answer.substr(0, 5) == "SCORE" && *action == 5) ||
-            (answer.substr(0, 5) == "TOTAL" && *action == 3))) {
-        code = scoring(answer, action);
+    else if (answer.size() >= 7 && ((answer.substr(0, 5) == "SCORE" && (*action == 5 || (*action == 2 && *lewa > 1)))
+        || (answer.substr(0, 5) == "TOTAL" && *action == 3))) {
+        code = scoring(answer, action, tricks);
     }
     // Proper deal message was received.
     else if ((*action == 1 || *action == 3) && answer.size() >= 6 && answer.substr(0, 4) == "DEAL" &&
@@ -346,6 +376,14 @@ uint8_t determine_action(uint8_t *action, string answer, set<string> *real_hand,
     // Proper busy message was received.
     else if (*action == 1 && answer.size() >= 4 && answer.substr(0, 4) == "BUSY") {
         code = busy(answer, dir);
+    }
+    else if (*action == 6 && answer.size() > 5 + offset && get_lewa(answer.substr(5, offset), *lewa) == 0) {
+        if (answer.substr(0, 5) == "TAKEN") {
+            trick_answer(answer, lewa, offset, real_hand, played, action, tricks, dir);
+        }
+        else if (answer.substr(0, 5) == "TRICK") {
+            code = play_card(*real_hand, automat, answer, action, played, waiting, offset, lewa);
+        }
     }
     return code;
 }
@@ -423,7 +461,7 @@ int main(int const argc, char* argv[]) {
         }
 
         // Creating new socket.
-        int socket_fd = socket(fam, SOCK_STREAM, 0);
+        int socket_fd = socket(server_address.sin_family, SOCK_STREAM, 0);
         if (socket_fd < 0) {  // There was an error creating a socket.
             fprintf(stderr,"ERROR: Couldn't create a socket\n");
             return 1;
@@ -446,7 +484,7 @@ int main(int const argc, char* argv[]) {
         message += term;
         uint8_t to_send = message.size();  // Size of the message.
 
-        string receiever;            // String holding received message.
+        string receiever;           // String holding received message.
         string played;              // Played card,
         uint8_t action = 1;         // Which message to get.
         uint8_t lewa = 0;           // Number of played turn.
@@ -491,15 +529,7 @@ int main(int const argc, char* argv[]) {
                     }
                 }
                 else if (poll_descriptors[0].revents & POLLIN) {  // Client wants and is able to read.
-                    uint8_t ret = 0;  // Checks if message was read whole or was there an error while reading.
-                    string recv;      // Part of read message in this iteration.
-                    if (!receiever.empty() && receiever.back() == '\r') {  // If reading the message ended on '/r'.
-                        recv = tcp_read(socket_fd, true, &ret);
-                    }
-                    else {
-                        recv = tcp_read(socket_fd, false, &ret);
-                    }
-                    receiever += recv;  // Adding currently read part of message.
+                    uint8_t ret = read_byte(socket_fd, &receiever);  // Checks if message was read whole or was there an error while reading.
                     if (ret == 2) {  // If there was an error while reading.
                         fprintf(stderr, "ERROR: Couldn't read message.\n");
                         return 1;

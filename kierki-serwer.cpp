@@ -9,7 +9,38 @@
 #include "common.h"
 using namespace std;
 string term("\r\n");
-
+// Receives messages using TCP protocol.
+string tcp_read(const int socket_fd, bool onr, uint8_t *ret){
+    int got;
+    if (onr) {
+        got = 1;
+    }
+    else {
+        got = 0;
+    }
+    char let;
+    string msg;
+    ssize_t read_new;
+    do {
+        read_new = read(socket_fd, &let, 1);
+        if (read_new < 0) {
+            *ret = 2;
+            got = 2;
+        }
+        else if (let == '\r') {
+            got = 1;
+        }
+        else if (let == '\n' && got == 1) {
+            got = 2;
+            *ret = 1;
+        }
+        else {
+            msg += let;
+            got = 0;
+        }
+    } while (got < 2 && read_new > 0);
+    return msg;
+}
 int read_file(string file, list<string> *modes, list<string> *hands) {
     ifstream inputFile(file);
     // Check if the file is successfully opened
@@ -110,64 +141,27 @@ int main(int argc, char *argv[]) {
         cout << "accepted\n";
         string x;
         uint8_t ret;
-        // string x;
+
         x = tcp_read(client_fd, false, &ret);
         cout << x << " od klienta\n";
         x = "DEAL6N2H3H4H5H6D2DQSKSAS10H10S10D10C\r\n";
         write(client_fd, x.c_str(), x.size());
-        x = "TRICK110H\r\n";
-        write(client_fd, x.c_str(), x.size());
-        
-        x = tcp_read(client_fd, false, &ret);
-        
-        cout << x << " " << x.size() << " od klienta\n";
         x = "TAKEN110C4C2C3CN\r\n";
         write(client_fd, x.c_str(), x.size());
-
-
-        x = "TRICK210H\r\n";
-        write(client_fd, x.c_str(), x.size());
-        x = tcp_read(client_fd, false, &ret);
-        cout << x << " " << x.size() << " od klienta\n";
 
         x = "WRONG2\r\n";
         write(client_fd, x.c_str(), x.size());
 
-        x = "TRICK210H\r\n";
-        write(client_fd, x.c_str(), x.size());
-        x = tcp_read(client_fd, false, &ret);
-        cout << x << " " << x.size() << " od klienta\n";
-        x = "TAKEN210C4C2C3CN\r\n";
+        x = "TAKEN210C4H2C3CN\r\n";
         write(client_fd, x.c_str(), x.size());
 
-        x = "TRICK310H\r\n";
+        x = "TAKEN310C4C2CQSN\r\n";
         write(client_fd, x.c_str(), x.size());
 
-        x = tcp_read(client_fd, false, &ret);
-        cout << x << " " << x.size() << " od klienta\n";
-        x = "TAKEN310C4C2C3CN\r\n";
+        x = "TAKEN410C4C3H3CN\r\n";
         write(client_fd, x.c_str(), x.size());
 
-
-
-        x = "TRICK410H\r\n";
-        write(client_fd, x.c_str(), x.size());
-
-        x = tcp_read(client_fd, false, &ret);
-        cout << x << " " << x.size() << " od klienta\n";
-        x = "TAKEN410C4C2C3CN\r\n";
-        write(client_fd, x.c_str(), x.size());
-
-
-        x = "TRICK10C\r\n";
-        write(client_fd, x.c_str(), x.size());
-
-        x = "TRICK5QH\r\n";
-        write(client_fd, x.c_str(), x.size());
-
-        x = tcp_read(client_fd, false, &ret);
-        cout << x << " " << x.size() << " od klienta\n";
-        x = "TAKEN510C4C2C3CN\r\n";
+        x = "TAKEN510D10C2C3CN\r\n";
         write(client_fd, x.c_str(), x.size());
 
 
@@ -176,7 +170,7 @@ int main(int argc, char *argv[]) {
 
         x = tcp_read(client_fd, false, &ret);
         cout << x << " " << x.size() << " od klienta\n";
-        x = "TAKEN610C4C2C3CN\r\n";
+        x = "TAKEN610H4C2C3CN\r\n";
         write(client_fd, x.c_str(), x.size());
 
 
@@ -185,7 +179,7 @@ int main(int argc, char *argv[]) {
 
         x = tcp_read(client_fd, false, &ret);
         cout << x << " " << x.size() << " od klienta\n";
-        x = "TAKEN710C4C2C3CN\r\n";
+        x = "TAKEN72H4C2C3CN\r\n";
         write(client_fd, x.c_str(), x.size());
 
 
@@ -194,16 +188,21 @@ int main(int argc, char *argv[]) {
 
         x = tcp_read(client_fd, false, &ret);
         cout << x << " " << x.size() << " od klienta\n";
-        x = "TAKEN810C4C2C3CN\r\n";
+        x = "TAKEN85H4C2C3CN\r\n";
         write(client_fd, x.c_str(), x.size());
 
-
         x = "TRICK9QH\r\n";
+        write(client_fd, x.c_str(), x.size());
+        x = "TRICK10QH\r";
+        write(client_fd, x.c_str(), x.size());
+
+        sleep(15);
+        x = "\n";
         write(client_fd, x.c_str(), x.size());
 
         x = tcp_read(client_fd, false, &ret);
         cout << x << " " << x.size() << " od klienta\n";
-        x = "TAKEN910C4C2C3CN\r\n";
+        x = "TAKEN910S4C2C3CN\r\n";
         write(client_fd, x.c_str(), x.size());
 
 
@@ -212,7 +211,7 @@ int main(int argc, char *argv[]) {
 
         x = tcp_read(client_fd, false, &ret);
         cout << x << " " << x.size() << " od klienta\n";
-        x = "TAKEN1010C4C2C3CN\r\n";
+        x = "TAKEN102D4C2C3CN\r\n";
         write(client_fd, x.c_str(), x.size());
 
 
@@ -221,7 +220,7 @@ int main(int argc, char *argv[]) {
 
         x = tcp_read(client_fd, false, &ret);
         cout << x << " " << x.size() << " od klienta\n";
-        x = "TAKEN1110C4C2C3CN\r\n";
+        x = "TAKEN116D4C2C3CN\r\n";
         write(client_fd, x.c_str(), x.size());
 
 
@@ -230,14 +229,14 @@ int main(int argc, char *argv[]) {
 
         x = tcp_read(client_fd, false, &ret);
         cout << x << " " << x.size() << " od klienta\n";
-        x = "TAKEN1210C4C2C3CN\r\n";
+        x = "TAKEN12AS4C2C3CN\r\n";
         write(client_fd, x.c_str(), x.size());
         x = "TRICK13QH\r\n";
         write(client_fd, x.c_str(), x.size());
 
         x = tcp_read(client_fd, false, &ret);
         cout << x << " " << x.size() << " od klienta\n";
-        x = "TAKEN1310C4C2C3CN\r\n";
+        x = "TAKEN13KS4C2C3CN\r\n";
         write(client_fd, x.c_str(), x.size());
         x = "SCOREN10E77W999S0\r\n";
         write(client_fd, x.c_str(), x.size());
@@ -249,10 +248,6 @@ int main(int argc, char *argv[]) {
     else {
         cout << "fuck offff\n";
     }
-
-
-
-
 
     return 0;
 }

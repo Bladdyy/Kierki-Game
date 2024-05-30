@@ -22,4 +22,4 @@ uint16_t read_port(string string, bool *error);
 
 
 // Reading while tcp.
-string tcp_read(int socket_fd, bool onr, uint8_t* ret);
+uint8_t read_byte(int socket_fd, string *message);

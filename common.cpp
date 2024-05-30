@@ -16,34 +16,17 @@ uint16_t read_port(string string, bool *error) {
 
 
 // Receives messages using TCP protocol.
-string tcp_read(const int socket_fd, bool onr, uint8_t *ret){
-    int got;
-    if (onr) {
-        got = 1;
-    }
-    else {
-        got = 0;
-    }
+uint8_t read_byte(const int socket_fd, string *message){
     char let;
-    string msg;
-    ssize_t read_new;
-    do {
-        read_new = read(socket_fd, &let, 1);
-        if (read_new < 0) {
-            *ret = 2;
-            got = 2;
-        }
-        else if (let == '\r') {
-            got = 1;
-        }
-        else if (let == '\n' && got == 1) {
-            got = 2;
-            *ret = 1;
-        }
-        else {
-            msg += let;
-            got = 0;
-        }
-    } while (got < 2 && read_new > 0);
-    return msg;
+    ssize_t read_new = read(socket_fd, &let, 1);
+    if (read_new < 0) {
+        return 2;
+    }
+    *message += let;
+    uint8_t size = message->size();
+    if (size >= 2 && message->substr(size - 2, 2) == "\r\n") {
+        *message = message->substr(0, size - 2);
+        return 1;
+    }
+    return 0;
 }
