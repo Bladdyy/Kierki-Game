@@ -47,32 +47,40 @@ static struct sockaddr_in get_server_address(string host, uint16_t port, bool* e
 }
 
 
-// Prints list of all the cards in the given set.
-void print_cards(set<string> cards) {
-    if (!cards.empty()) {  // If there are any cards in the set.
+// Prints list of all the cards.
+void print_cards(list<string> cards) {
+    if (!cards.empty()) {  // If there are any cards in the list.
         auto card = cards.begin();
         cout << *card;
         for (int i = 0; i < cards.size() - 1; i++) {
-            card++;
+            ++card;
             cout << ", " << *card;
         }
     }
 }
 
 
-uint8_t in_hand(set<string> hand, set<string> taken, set<string> *real_hand, string played, uint8_t action) {
+// Checks if there is exactly one card from client's hand in taken cards and erases it from hand.
+// real_hand - list of cards in hand, taken - list of taken cards, played - card played in current trick,
+// action - type of next message to handle.
+uint8_t in_hand(list<string> *real_hand, list<string> taken, string played, uint8_t action) {
+    string card;  //
     uint8_t in_hand = 0;
-    string card;
+    list<string>::iterator del;
+    set<string> temp;
     for (string el: taken) {
-        pair<set<string>::iterator, bool> ret = hand.insert(el);  // Trying to add to hand.
+        temp.insert(el);
+    }
+    for (auto it = real_hand->begin(); it != real_hand->end(); ++it) {
+        pair<set<string>::iterator, bool> ret = temp.insert(*it);  // Trying to add to hand.
         if (!ret.second) {  // If this card already was in hand.
             in_hand++;
-            card = el;
-            cout << el << "\n";
+            card = *it;
+            del = it;
         }
     }
     if (in_hand == 1 && (action == 6 || card == played)) {
-        real_hand->erase(card);
+        real_hand->erase(del);
     }
     else {
         in_hand = 0;
@@ -81,7 +89,7 @@ uint8_t in_hand(set<string> hand, set<string> taken, set<string> *real_hand, str
 }
 
 // Extracts card numbers from 'answer',
-int get_cards(set<string> *cards, string answer) {
+int get_cards(list<string> *cards, string answer) {
     string card;       // Currently extracted card.
     bool num = false;  // Number got.
     for (char el: answer) {
@@ -99,10 +107,12 @@ int get_cards(set<string> *cards, string answer) {
         // Getting the color of the card if grade is extracted.
         else if ((el == 'C' || el == 'D' || el == 'H' || el == 'S') && num) {
             card += el;
-            pair<set<string>::iterator, bool> ret = (*cards).insert(card);  // Adding to the hand.
-            if (!ret.second) {  // If server gave a duplicate of the same card.
-                return 1;
+            for (string got: *cards) {
+                if (card == got) {  // If server gave a duplicate of the same card.
+                    return 1;
+                }
             }
+            cards->emplace_back(card);  // Adding to the hand.
             num = false;
         }
         else {  // If there was an illegal symbol.
@@ -130,14 +140,14 @@ uint8_t get_lewa(string answer, uint8_t lewa) {
 
 // Handles 'TRICK'. Forces program to pick a card and send it to the server.
 // Displays trick info. Picks a card to play if 'automat' is true.
-// Hand is the set of client's cards, automat - automatically picks card to play, answer - message received from server,
+// Hand is the list of client's cards, automat - automatically picks card to play, answer - message received from server,
 // action - type of next message to handle, played - ID of card to play, waiting - wait for a card pick from user.
 // offset - number of digits in the number of turn, lewa - number of the turn.
-uint8_t play_card(set<string> hand, bool automat, string answer, uint8_t* action, string *played, bool* waiting, uint8_t offset, uint8_t *lewa) {
-    set<string> cards;  // Cards played in current turn by other players.
+uint8_t play_card(list<string> hand, bool automat, string answer, uint8_t* action, string *played, bool* waiting, uint8_t offset, uint8_t *lewa) {
+    list<string> cards;  // Cards played in current turn by other players.
     int get = get_cards(&cards, answer.substr(5 + offset, answer.size() - 5 - offset));  // Extracts list of card from message.
     if (get == 0 && cards.size() < 4) {  // If there are max 3 cards.
-        cout << "Trick: " << to_string(*lewa) << " ";
+        cout << "Trick: (" << to_string(*lewa) << ") ";
         print_cards(cards);
         cout << "\n";
         cout << "Available: ";
@@ -170,9 +180,9 @@ uint8_t play_card(set<string> hand, bool automat, string answer, uint8_t* action
 
 // Handles 'WRONG' and 'TAKEN'. Displays communicate info.
 // Answer - message received from server, lewa - number of the turn, offset - length of received turn number,
-// real_hand - set of client's cards, played - last played card, action - type of next message to handle,
+// real_hand - list of client's cards, played - last played card, action - type of next message to handle,
 // tricks list of tricks taken, dir - ID of seat occupied by client.
-void trick_answer(string answer, uint8_t *lewa, uint8_t offset, set<string> *real_hand,
+void trick_answer(string answer, uint8_t *lewa, uint8_t offset, list<string> *real_hand,
         string *played, uint8_t *action, list<list<string>> *tricks, char dir) {
     // Correct 'WRONG'.
     if (answer.substr(0, 5) == "WRONG") {
@@ -182,17 +192,12 @@ void trick_answer(string answer, uint8_t *lewa, uint8_t offset, set<string> *rea
     // Correct 'TAKEN'.
     else if (answer.size() > 6 + offset && answer.substr(0, 5) == "TAKEN"
             && dirs.find(answer.back()) != string::npos) {
-        set<string> taken;  // Taken cards.
+        list<string> taken;  // Taken cards.
         int got = get_cards(&taken, answer.substr(5 + offset, answer.size() - 6 - offset));
-        if (got == 0 && taken.size() == 4 && in_hand(*real_hand, taken, real_hand, *played, *action) == 1) {  // If there are cards.
+        if (got == 0 && taken.size() == 4 && in_hand(real_hand, taken, *played, *action) == 1) {  // If there are cards.
             // Add trick to the list, if taken by client.
             if (answer.back() == dir) {
-                list<string> new_trick;
-                for (auto itr = taken.begin(); itr != taken.end(); itr++)
-                {
-                    new_trick.emplace_back(*itr);
-                }
-                tricks->emplace_back(new_trick);
+                tricks->emplace_back(taken);
             }
             cout << "A trick " << to_string(*lewa) << " is taken by " << answer.back() << ", cards ";
             print_cards(taken);
@@ -284,10 +289,10 @@ int scoring(string answer, uint8_t *action, list<list<string>> *tricks) {
 
 
 // Handles 'DEAL'. Displays deal's info.
-// Answer - message received from server, real_hand - set of client's cards, action - type of next message to handle,
+// Answer - message received from server, real_hand - list of client's cards, action - type of next message to handle,
 // lewa - number of the turn.
-void deal(string answer, set<string> *real_hand, uint8_t *action, uint8_t *lewa) {
-    set<string> hand;  // Cards given in the deal.
+void deal(string answer, list<string> *real_hand, uint8_t *action, uint8_t *lewa) {
+    list<string> hand;  // Cards given in the deal.
     int get = get_cards(&hand, answer.substr(6, answer.size() - 6));
     if (get == 0 && hand.size() == 13) {  // If received 13 cards.
         *real_hand = hand;
@@ -328,7 +333,7 @@ int busy(string answer, char dir) {
     }
     if (!miss) {  // If received message is correct.
         string response("Place busy, list of busy places received:");
-        for (const char el: places) {
+        for (char el: answer.substr(4, answer.size() - 4)) {
             response += " ";
             response += el;
         }
@@ -340,12 +345,13 @@ int busy(string answer, char dir) {
 
 
 // Redirects to correct function based on given variables. Action - type of next message to handle
-// Answer - message received from server, real_hand - set of client's cards, lewa - number of the turn,
+// Answer - message received from server, real_hand - list of client's cards, lewa - number of the turn,
 // played - last played card, automat - automatically picks card to play, waiting - waits for user input,
 // tricks list of tricks taken, dir - ID of seat occupied by client
 // by any player when client arrives to a round already in play.
-uint8_t determine_action(uint8_t *action, string answer, set<string> *real_hand, uint8_t *lewa, string *played,
+uint8_t determine_action(uint8_t *action, string answer, list<string> *real_hand, uint8_t *lewa, string *played,
     bool automat, bool *waiting, list<list<string>> *tricks, char dir) {
+    cout << "determine " << answer << "\n";
     int code = 0;    // Return value.
     uint8_t offset;  // Length of number of current turn.
     if (*lewa > 9) {
@@ -377,7 +383,7 @@ uint8_t determine_action(uint8_t *action, string answer, set<string> *real_hand,
     else if (*action == 1 && answer.size() >= 4 && answer.substr(0, 4) == "BUSY") {
         code = busy(answer, dir);
     }
-    else if (*action == 6 && answer.size() > 5 + offset && get_lewa(answer.substr(5, offset), *lewa) == 0) {
+    else if (*action == 6 && answer.size() >= 5 + offset && get_lewa(answer.substr(5, offset), *lewa) == 0) {
         if (answer.substr(0, 5) == "TAKEN") {
             trick_answer(answer, lewa, offset, real_hand, played, action, tricks, dir);
         }
@@ -489,7 +495,7 @@ int main(int const argc, char* argv[]) {
         uint8_t action = 1;         // Which message to get.
         uint8_t lewa = 0;           // Number of played turn.
         list<list<string>> tricks;  // Taken tricks.
-        set<string> hand;           // Cards in client's hand.
+        list<string> hand;          // Cards in client's hand.
         bool waiting = false;       // Waiting for user input.
 
         int poll_act;                           // Value returned from poll.
@@ -515,6 +521,7 @@ int main(int const argc, char* argv[]) {
             }
             else if (poll_act > 0) {  // Any event detected.
                 if (poll_descriptors[0].revents & POLLOUT) {  // Client wants and is able to write.
+                    cout << "writing!\n";
                     ssize_t done = write(socket_fd, message.c_str(), to_send);  // Writing as much as possible.
                     if (done <= 0) {  // If there was an error while writing.
                         fprintf(stderr, "ERROR: There was an error while writing to server.\n");
@@ -543,11 +550,17 @@ int main(int const argc, char* argv[]) {
                         }
                         else if (code == 2) {  // Send automatically played card.
                             // Preparing the message to send.
-                            message = played;
+                            message = "TRICK";
+                            message += to_string(lewa);
+                            message += played;
                             message += term;
                             to_send = message.size();
                             poll_descriptors[0].events = POLLOUT;  // Send message.
                         }
+                    }
+                    else if (ret == 3) {
+                        fprintf(stderr, "ERROR: Server dismissed the connection.\n");
+                        return 1;
                     }
                 }
                 if (poll_descriptors[1].revents & POLLIN) {  // There was an user input.
@@ -570,8 +583,10 @@ int main(int const argc, char* argv[]) {
                     }
                     else if(recv[0] == '!' && waiting) {  // User wanted to put card when requested.
                         // Preparing the message to send.
-                        message = recv.substr(1, recv.size() - 1);
-                        played = message;
+                        played = recv.substr(1, recv.size() - 1);
+                        message = "TRICK";
+                        message += to_string(lewa);
+                        message += played;
                         message += term;
                         to_send = message.size();
                         waiting = false;  // Stop waiting for user input.

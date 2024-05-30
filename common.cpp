@@ -22,6 +22,9 @@ uint8_t read_byte(const int socket_fd, string *message){
     if (read_new < 0) {
         return 2;
     }
+    if (read_new == 0) {
+        return 3;
+    }
     *message += let;
     uint8_t size = message->size();
     if (size >= 2 && message->substr(size - 2, 2) == "\r\n") {
