@@ -142,247 +142,246 @@ int main(int argc, char *argv[]) {
         string x;
         uint8_t ret;
         x = tcp_read(client_fd, false, &ret);
-        cout << x << " od klienta\n";
-        x = "BUSYNSE\r\n";
-        write(client_fd, x.c_str(), x.size());
         // cout << x << " od klienta\n";
-        // x = "DEAL6N3H2H4H5H6D2DQSKSAS10H10S10D10C\r\n";
+        // x = "BUSYNSE\r\n";
         // write(client_fd, x.c_str(), x.size());
-        // x = "TAKEN110C4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = "WRONG2\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = "TAKEN23H4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = "TAKEN32H4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = "TAKEN44H4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = "TAKEN55H4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        //
-        // x = "TRICK6QH\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = tcp_read(client_fd, false, &ret);
-        // cout << x << " " << x.size() << " od klienta\n";
-        // x = "TAKEN610H4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        //
-        // x = "TRICK7QH\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = tcp_read(client_fd, false, &ret);
-        // cout << x << " " << x.size() << " od klienta\n";
-        // x = "TAKEN76D4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        //
-        // x = "TRICK8QH\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = tcp_read(client_fd, false, &ret);
-        // cout << x << " " << x.size() << " od klienta\n";
-        // x = "TAKEN82D4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = "TRICK9QH\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        // x = "TRICK10QH\r";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = "\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = tcp_read(client_fd, false, &ret);
-        // cout << x << " " << x.size() << " od klienta\n";
-        // x = "TAKEN9QS4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        //
-        // x = "TRICK10QH\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = tcp_read(client_fd, false, &ret);
-        // cout << x << " " << x.size() << " od klienta\n";
-        // x = "TAKEN10KS4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        //
-        // x = "TRICK11QH\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = tcp_read(client_fd, false, &ret);
-        // cout << x << " " << x.size() << " od klienta\n";
-        // x = "TAKEN11AS4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        //
-        // x = "TRICK12QH\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = tcp_read(client_fd, false, &ret);
-        // cout << x << " " << x.size() << " od klienta\n";
-        // x = "TAKEN1210S4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        // x = "TRICK13QH\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = tcp_read(client_fd, false, &ret);
-        // cout << x << " " << x.size() << " od klienta\n";
-        // x = "TAKEN1310D4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        // x = "SCOREN10E77W999S0\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = "TOTALN10E77W99999S0\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        //
-        //
-        // x = "DEAL6N3H2H4H5H6D2DQSKSAS10H10S10D10C\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        // x = "TRICK110H\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = tcp_read(client_fd, false, &ret);
-        //
-        // cout << x << " " << x.size() << " od klienta\n";
-        // x = "TAKEN13H4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        //
-        // x = "TRICK210H\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        // x = tcp_read(client_fd, false, &ret);
-        // cout << x << " " << x.size() << " od klienta\n";
-        //
-        // x = "WRONG2\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = "TRICK210H\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        // x = tcp_read(client_fd, false, &ret);
-        // cout << x << " " << x.size() << " od klienta\n";
-        // x = "TAKEN22H4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = "TRICK310H\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = tcp_read(client_fd, false, &ret);
-        // cout << x << " " << x.size() << " od klienta\n";
-        // x = "TAKEN34H4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        //
-        //
-        // x = "TRICK410H\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = tcp_read(client_fd, false, &ret);
-        // cout << x << " " << x.size() << " od klienta\n";
-        // x = "TAKEN45H4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        //
-        // x = "TRICK10C\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = "TRICK5QH\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = tcp_read(client_fd, false, &ret);
-        // cout << x << " " << x.size() << " od klienta\n";
-        // x = "TAKEN510H4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        //
-        // x = "TRICK6QH\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = tcp_read(client_fd, false, &ret);
-        // cout << x << " " << x.size() << " od klienta\n";
-        // x = "TAKEN66D4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        //
-        // x = "TRICK7QH\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = tcp_read(client_fd, false, &ret);
-        // cout << x << " " << x.size() << " od klienta\n";
-        // x = "TAKEN72D4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        //
-        // x = "TRICK8QH\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = tcp_read(client_fd, false, &ret);
-        // cout << x << " " << x.size() << " od klienta\n";
-        // x = "TAKEN8QS4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        //
-        // x = "TRICK9QH\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = tcp_read(client_fd, false, &ret);
-        // cout << x << " " << x.size() << " od klienta\n";
-        // x = "TAKEN9KS4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        //
-        // x = "TRICK10QH\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = tcp_read(client_fd, false, &ret);
-        // cout << x << " " << x.size() << " od klienta\n";
-        // x = "TAKEN10AS4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        //
-        // x = "TRICK11QH\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = tcp_read(client_fd, false, &ret);
-        // cout << x << " " << x.size() << " od klienta\n";
-        // x = "TAKEN1110S4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        //
-        // x = "TRICK12QH\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = tcp_read(client_fd, false, &ret);
-        // cout << x << " " << x.size() << " od klienta\n";
-        // x = "TAKEN1210D4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        // x = "TRICK13QH\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = tcp_read(client_fd, false, &ret);
-        // cout << x << " " << x.size() << " od klienta\n";
-        // x = "TAKEN1310C4C2C3CN\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        // x = "SCOREN10E77W999S0\r\n";
-        // write(client_fd, x.c_str(), x.size());
-        //
-        // x = "TOTALN10E77W999S0\r\n";
-        // write(client_fd, x.c_str(), x.size());
+        cout << x << " od klienta\n";
+        x = "DEAL6N3H2H4H5H6D2DQSKSAS10H10S10D10C\r\n";
+        write(client_fd, x.c_str(), x.size());
+        x = "TAKEN110C4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = "WRONG2\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = "TAKEN23H4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = "TAKEN32H4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = "TAKEN44H4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = "TAKEN55H4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+
+        x = "TRICK6QH\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+        x = "TAKEN610H4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+
+        x = "TRICK7QH\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+        x = "TAKEN76D4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+
+        x = "TRICK8QH\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+        x = "TAKEN82D4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = "TRICK9QH\r\n";
+        write(client_fd, x.c_str(), x.size());
+        x = "TRICK10QH\r";
+        write(client_fd, x.c_str(), x.size());
+
+        x = "\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+        x = "TAKEN9QS4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+
+        x = "TRICK10QH\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+        x = "TAKEN10KS4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+
+        x = "TRICK11QH\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+        x = "TAKEN11AS4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+
+        x = "TRICK12QH\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+        x = "TAKEN1210S4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+        x = "TRICK13QH\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+        x = "TAKEN1310D4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+        x = "SCOREN10E77W999S0\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = "TOTALN10E77W99999S0\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+
+
+        x = "DEAL6N3H2H4H5H6D2DQSKSAS10H10S10D10C\r\n";
+        write(client_fd, x.c_str(), x.size());
+        x = "TRICK110H\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = tcp_read(client_fd, false, &ret);
+
+        cout << x << " " << x.size() << " od klienta\n";
+        x = "TAKEN13H4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+
+        x = "TRICK210H\r\n";
+        write(client_fd, x.c_str(), x.size());
+        x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+
+        x = "WRONG2\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = "TRICK210H\r\n";
+        write(client_fd, x.c_str(), x.size());
+        x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+        x = "TAKEN22H4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = "TRICK310H\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+        x = "TAKEN34H4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+
+
+        x = "TRICK410H\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+        x = "TAKEN45H4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+
+        x = "TRICK10C\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = "TRICK5QH\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+        x = "TAKEN510H4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+
+        x = "TRICK6QH\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+        x = "TAKEN66D4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+
+        x = "TRICK7QH\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+        x = "TAKEN72D4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+
+        x = "TRICK8QH\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+        x = "TAKEN8QS4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+
+        x = "TRICK9QH\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+        x = "TAKEN9KS4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+
+        x = "TRICK10QH\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+        x = "TAKEN10AS4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+
+        x = "TRICK11QH\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+        x = "TAKEN1110S4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+
+        x = "TRICK12QH\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+        x = "TAKEN1210D4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+        x = "TRICK13QH\r\n";
+        write(client_fd, x.c_str(), x.size());
+
+        x = tcp_read(client_fd, false, &ret);
+        cout << x << " " << x.size() << " od klienta\n";
+        x = "TAKEN1310C4C2C3CN\r\n";
+        write(client_fd, x.c_str(), x.size());
+        x = "TOTALN10E77W999S0\r\n";
+        write(client_fd, x.c_str(), x.size());
+        x = "SCOREN10E77W999S0\r\n";
+
+        write(client_fd, x.c_str(), x.size());
         close(socket_fd);
     }
     else {
         cout << "fuck offff\n";
     }
-
     return 0;
 }

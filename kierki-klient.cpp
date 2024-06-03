@@ -1,5 +1,5 @@
-// TODO Raport z rozgrywki klient automatyczny
-// TODO obsługa nadmiernych argumentów.
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <fcntl.h>
 #include <iostream>
 #include <cstdio>
@@ -18,12 +18,11 @@ string term("\r\n");  // End of the message symbols.
 string dirs("NESW");  // Often used to check if directions of the table are correct.
 
 
-// Gets address of the server for IPv4 and connects to it.
+// Gets address of the server for IPv4 and connects to it, host - host's name, port - port number.
 int get_server_address_and_connect_4(string host, uint16_t port) {
     int socket_fd;  // Socket number.
     // Creating hints.
-    struct addrinfo hints;
-    memset(&hints, 0, sizeof(struct addrinfo));
+    struct addrinfo hints = {};
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
@@ -36,8 +35,7 @@ int get_server_address_and_connect_4(string host, uint16_t port) {
     }
     else {
         // Updating socket address information.
-        struct sockaddr_in send_address;
-        memset(&send_address, 0, sizeof(sockaddr_in));
+        struct sockaddr_in send_address = {};
         send_address.sin_family = address_result->ai_family;
         send_address.sin_addr.s_addr =
                 ((struct sockaddr_in *) (address_result->ai_addr))->sin_addr.s_addr;
@@ -61,12 +59,11 @@ int get_server_address_and_connect_4(string host, uint16_t port) {
 }
 
 
-// Gets address of the server for IPv6 and connects to it.
+// Gets address of the server for IPv6 and connects to it, host - host's name, port - port number.
 int get_server_address_and_connect_6(string host, uint16_t port) {
     int socket_fd;  // Socket value.
     // Creating hints.
-    struct addrinfo hints;
-    memset(&hints, 0, sizeof(struct addrinfo));
+    struct addrinfo hints = {};
     hints.ai_family = AF_INET6;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
@@ -80,8 +77,7 @@ int get_server_address_and_connect_6(string host, uint16_t port) {
     }
     else {
         // Updating socket address information.
-        struct sockaddr_in6 send_address;
-        memset(&send_address, 0, sizeof(sockaddr_in6));
+        struct sockaddr_in6 send_address = {};
         send_address = *((struct sockaddr_in6*)(address_result->ai_addr));
         send_address.sin6_port = htons(port); // Port from the command line
         freeaddrinfo(address_result);
@@ -104,10 +100,10 @@ int get_server_address_and_connect_6(string host, uint16_t port) {
 }
 
 
-// Gets server address with IP version not specified. Connects to the server.
-int get_any_address(string host, uint16_t port) {
-    struct addrinfo hints;  // Creating hints.
-    memset(&hints, 0, sizeof(struct addrinfo));
+// Gets server address with IP version not specified. Connects to the server, host - host's name, port - port's number,
+// fam - IP version.
+int get_any_address(string host, uint16_t port, int *fam) {
+    struct addrinfo hints = {};  // Creating hints.
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = 0;
@@ -128,6 +124,7 @@ int get_any_address(string host, uint16_t port) {
         // Get the right address.
         for (many = address_result; many != nullptr; many = many->ai_next) {
             socket_fd = socket(many->ai_family, many->ai_socktype, many->ai_protocol);
+            *fam = many->ai_family;
             if (socket_fd >= 0) {
                 // Connecting to the server.
                 if (connect(socket_fd, many->ai_addr, many->ai_addrlen) < 0) {
@@ -147,14 +144,14 @@ int get_any_address(string host, uint16_t port) {
     return socket_fd;
 }
 
-// Prints list of all the cards.
+// Prints list of all the cards, cards - list of cards to display.
 void print_cards(list<string> cards) {
     if (!cards.empty()) {  // If there are any cards in the list.
         auto card = cards.begin();
-        cout << *card << flush;
+        cout << *card;
         for (int i = 0; i < cards.size() - 1; i++) {
             ++card;
-            cout << ", " << *card << flush;
+            cout << ", " << *card;
         }
     }
 }
@@ -188,7 +185,7 @@ uint8_t in_hand(list<string> *real_hand, list<string> taken, string played, uint
     return in_hand;
 }
 
-// Extracts card numbers from 'answer',
+// Extracts card numbers from 'answer', cards - list where cards are stored, answer - message from cards are being extracted.
 int get_cards(list<string> *cards, string answer) {
     string card;       // Currently extracted card.
     bool num = false;  // Number got.
@@ -223,7 +220,7 @@ int get_cards(list<string> *cards, string answer) {
 }
 
 
-// Checks if number of turn is proper.
+// Checks if number of turn is proper, answer - message from which number of turn is being extracted, lewa - number of current turn.
 uint8_t get_lewa(string answer, uint8_t lewa) {
     string str_lewa = to_string(lewa);
     // If turn number is double digits.
@@ -247,13 +244,14 @@ uint8_t play_card(list<string> hand, bool automat, string answer, uint8_t* actio
     list<string> cards;  // Cards played in current turn by other players.
     int get = get_cards(&cards, answer.substr(5 + offset, answer.size() - 5 - offset));  // Extracts list of card from message.
     if (get == 0 && cards.size() < 4) {  // If there are max 3 cards.
-        cout << "Trick: (" << to_string(*lewa) << ") " << flush;
-        print_cards(cards);
-        cout << "\n" << flush;
-        cout << "Available: " << flush;
-        print_cards(hand);
-        cout << "\n" << flush;
-
+        if (!automat) {  // Non-automatic player.
+            cout << "Trick: (" << to_string(*lewa) << ") ";
+            print_cards(cards);
+            cout << endl;
+            cout << "Available: ";
+            print_cards(hand);
+            cout << endl;
+        }
         *action = 4;  // Next - receive 'WRONG' or 'TAKEN'.
 
         string play;  // Played card.
@@ -281,12 +279,14 @@ uint8_t play_card(list<string> hand, bool automat, string answer, uint8_t* actio
 // Handles 'WRONG' and 'TAKEN'. Displays communicate info.
 // Answer - message received from server, lewa - number of the turn, offset - length of received turn number,
 // real_hand - list of client's cards, played - last played card, action - type of next message to handle,
-// tricks list of tricks taken, dir - ID of seat occupied by client.
+// tricks list of tricks taken, dir - ID of seat occupied by client, automat - automatically picks card to play.
 void trick_answer(string answer, uint8_t *lewa, uint8_t offset, list<string> *real_hand,
-        string *played, uint8_t *action, list<list<string>> *tricks, char dir) {
+        string *played, uint8_t *action, list<list<string>> *tricks, char dir, bool automat) {
     // Correct 'WRONG'.
     if (answer.substr(0, 5) == "WRONG") {
-        cout << "Wrong message received in trick " << to_string(*lewa) << ".\n" << flush;
+        if (!automat) {
+            cout << "Wrong message received in trick " << to_string(*lewa) << "." << endl;
+        }
         *action = 2;  // Next - receive 'TRICK'.
     }
     // Correct 'TAKEN'.
@@ -299,9 +299,11 @@ void trick_answer(string answer, uint8_t *lewa, uint8_t offset, list<string> *re
             if (answer.back() == dir) {
                 tricks->emplace_back(taken);
             }
-            cout << "A trick " << to_string(*lewa) << " is taken by " << answer.back() << ", cards " << flush;
-            print_cards(taken);
-            cout << ".\n" << flush;
+            if (!automat) {
+                cout << "A trick " << to_string(*lewa) << " is taken by " << answer.back() << ", cards ";
+                print_cards(taken);
+                cout << "." << endl;
+            }
             if (*lewa == 13) {
                 *lewa = 0;
                 *action = 5;  // Next - receive 'SCORE' or 'TOTAL',
@@ -320,8 +322,9 @@ void trick_answer(string answer, uint8_t *lewa, uint8_t offset, list<string> *re
 
 // Handles 'SCORE' and 'TOTAL'. Displays communicate info.
 // Answer - message received from server, action - type of next message to handle.
-// Tricks - List of all taken tricks, total - last received message was 'TOTAL'.
-void scoring(string answer, uint8_t *action, list<list<string>> *tricks, bool *total) {
+// Tricks - List of all taken tricks, end_score - which type of score has been written,
+// automat - automatically picks card to play.
+void scoring(string answer, uint8_t *action, list<list<string>> *tricks, uint8_t *end_score, bool automat) {
     set<char> places;                      // Checks for four different seats.
     list<pair<char, string>> point_pairs;  // List of scores.
     bool miss = false;                     // Error in the data.
@@ -370,17 +373,34 @@ void scoring(string answer, uint8_t *action, list<list<string>> *tricks, bool *t
         if (!miss && places.size() == 4) {  // There are four player scores and no errors.
             // Displays values.
             if (answer.substr(0, 5) == "SCORE") {
-                cout << "The scores are:\n" << flush;
-                *action = 7;  // Next - receive 'TOTAL'.
+                if (!automat) {  // Non-automatic player.
+                    cout << "The scores are:" << endl;
+                }
                 tricks->clear();
+                if (*end_score == 1) {  // Received TOTAL before.
+                    *end_score = 3;
+                    *action = 3;  // Next - receive 'DEAL'.
+                }
+                else {                  // Received only SCORE.
+                    *end_score = 2;
+                }
             }
             else {
-                cout << "The total scores are:\n" << flush;
-                *action = 3;
-                *total = true;
+                if (!automat) {  // Non-automatic player.
+                    cout << "The total scores are:" << endl;
+                }
+                if (*end_score == 2) {  // Received SCORE before.
+                    *end_score = 3;
+                    *action = 3;  // Next - receive 'DEAL'.
+                }
+                else {                  // Received only TOTAL,
+                    *end_score = 1;
+                }
             }
-            for (pair<char, string> el: point_pairs) {
-                cout << el.first << " | " << el.second << "\n" << flush;
+            if (!automat) {  // Non-automatic player.
+                for (pair<char, string> el: point_pairs) {
+                    cout << el.first << " | " << el.second << endl;
+                }
             }
         }
     }
@@ -389,16 +409,18 @@ void scoring(string answer, uint8_t *action, list<list<string>> *tricks, bool *t
 
 // Handles 'DEAL'. Displays deal's info.
 // Answer - message received from server, real_hand - list of client's cards, action - type of next message to handle,
-// lewa - number of the turn, total - last received message was 'TOTAL'.
-void deal(string answer, list<string> *real_hand, uint8_t *action, uint8_t *lewa, bool* total) {
+// lewa - number of the turn, end_score - which type of score has been written, automat - automatically picks card to play.
+void deal(string answer, list<string> *real_hand, uint8_t *action, uint8_t *lewa, uint8_t *end_score, bool automat) {
     list<string> hand;  // Cards given in the deal.
     int get = get_cards(&hand, answer.substr(6, answer.size() - 6));
     if (get == 0 && hand.size() == 13) {  // If received 13 cards.
-        *total = false;  // Received something other than total.
+        *end_score = 0;  // Received something other than total.
         *real_hand = hand;
-        cout << "New deal " << answer[4] << " staring place " << answer[5] << ", your cards: " << flush;
-        print_cards(hand);
-        cout<< ".\n" << flush;
+        if (!automat) {  // Non-automatic player.
+            cout << "New deal " << answer[4] << " staring place " << answer[5] << ", your cards: ";
+            print_cards(hand);
+            cout<< "." << endl;
+        }
         if (*action == 1) {
             *action = 6;  // Next - receive 'TRICK' or possible 'TAKEN'.
         }
@@ -412,7 +434,8 @@ void deal(string answer, list<string> *real_hand, uint8_t *action, uint8_t *lewa
 
 // Handles 'BUSY. Displays communicate info. Forces program to quit.
 // Answer - message received from server, dir - ID of seat occupied by client.
-int busy(string answer, char dir) {
+// automat - automatically picks card to play.
+int busy(string answer, char dir, bool automat) {
     set<char> places;   // Seats taken.
     int code = 0;       // Return value.
     bool miss = false;  // Wrong values of seats taken.
@@ -432,12 +455,14 @@ int busy(string answer, char dir) {
         miss = true;
     }
     if (!miss) {  // If received message is correct.
-        string response("Place busy, list of busy places received:");
-        for (char el: answer.substr(4, answer.size() - 4)) {
-            response += " ";
-            response += el;
+        if (!automat) {  // Non-automatic player.
+            string response("Place busy, list of busy places received:");
+            for (char el: answer.substr(4, answer.size() - 4)) {
+                response += " ";
+                response += el;
+            }
+            cout << response << "." << endl;
         }
-        cout << response << ".\n" << flush;
         code = 1;  // Force quit.
     }
     return code;
@@ -447,10 +472,10 @@ int busy(string answer, char dir) {
 // Redirects to correct function based on given variables. Action - type of next message to handle
 // Answer - message received from server, real_hand - list of client's cards, lewa - number of the turn,
 // played - last played card, automat - automatically picks card to play, waiting - waits for user input,
-// tricks list of tricks taken, total - last received message was 'TOTAL'. dir - ID of seat occupied by client
-// by any player when client arrives to a round already in play.
+// tricks list of tricks taken, dir - ID of seat occupied by client
+// by any player when client arrives to a round already in play, end_score - which type of score has been written.
 uint8_t determine_action(uint8_t *action, string answer, list<string> *real_hand, uint8_t *lewa, string *played,
-    bool automat, bool *waiting, list<list<string>> *tricks, bool *total, char dir) {
+    bool automat, bool *waiting, list<list<string>> *tricks, char dir, uint8_t *end_score) {
     int code = 0;    // Return value.
     uint8_t offset;  // Length of number of current turn.
     if (*lewa > 9) {
@@ -466,25 +491,26 @@ uint8_t determine_action(uint8_t *action, string answer, list<string> *real_hand
     }
     // Proper answer for playing card received was received.
     else if (*action == 4 && answer.size() >= 5 + offset && get_lewa(answer.substr(5, offset), *lewa) == 0) {
-        trick_answer(answer, lewa, offset, real_hand, played, action, tricks, dir);
+        trick_answer(answer, lewa, offset, real_hand, played, action, tricks, dir, automat);
     }
     // Proper round/game ending message was received.
-    else if (answer.size() >= 7 && ((answer.substr(0, 5) == "SCORE" && (*action == 5 || (*action == 2 && *lewa > 1)))
-        || (answer.substr(0, 5) == "TOTAL" && *action == 7))) {
-        scoring(answer, action, tricks, total);
+    else if (answer.size() >= 7 && (*action == 5 || (*action == 2 && *lewa > 1))
+        && ((answer.substr(0, 5) == "SCORE" && (*end_score == 0 || *end_score == 1))
+            || (answer.substr(0, 5) == "TOTAL" && (*end_score == 0 || *end_score == 2)))) {
+        scoring(answer, action, tricks, end_score, automat);
     }
     // Proper deal message was received.
     else if ((*action == 1 || *action == 3) && answer.size() >= 6 && answer.substr(0, 4) == "DEAL" &&
             answer[4] <= '7' && answer[4] >= '1' && dirs.find(answer[5]) != string::npos) {
-        deal(answer, real_hand, action, lewa, total);
+        deal(answer, real_hand, action, lewa, end_score, automat);
     }
     // Proper busy message was received.
     else if (*action == 1 && answer.size() >= 4 && answer.substr(0, 4) == "BUSY") {
-        code = busy(answer, dir);
+        code = busy(answer, dir, automat);
     }
     else if (*action == 6 && answer.size() >= 5 + offset && get_lewa(answer.substr(5, offset), *lewa) == 0) {
         if (answer.substr(0, 5) == "TAKEN") {
-            trick_answer(answer, lewa, offset, real_hand, played, action, tricks, dir);
+            trick_answer(answer, lewa, offset, real_hand, played, action, tricks, dir, automat);
         }
         else if (answer.substr(0, 5) == "TRICK") {
             code = play_card(*real_hand, automat, answer, action, played, waiting, offset, lewa);
@@ -501,6 +527,14 @@ int main(int const argc, char* argv[]) {
     int version = 0;       // Version of IP.
     char dir = 'X';        // Direction of place at the table
     bool automat = false;  // Enables automatic player.
+
+    // Looking for invalid arguments that aren't an option.
+    for (int i = 1; i < argc; i++) {
+        if (argv[i][0] != '-' && (strcmp(argv[i - 1], "-h") != 0 && strcmp(argv[i - 1], "-p") != 0)) {
+            fprintf(stderr, "ERROR: Invalid additional argument.\n");
+            return 1;
+        }
+    }
 
     // Getting option arguments.
     char get;
@@ -534,7 +568,8 @@ int main(int const argc, char* argv[]) {
                 automat = true;
                 break;
             default:
-                break;
+                fprintf(stderr, "ERROR: Invalid option argument.\n");
+                return 1;
         }
     }
     // If requested arguments were given.
@@ -547,29 +582,48 @@ int main(int const argc, char* argv[]) {
 
         // Choosing IP version.
         int socket_fd;  // Socket descriptor.
+        int fam;  // IP version.
         if (version == 4) {  // Getting server address IPv4.
+            fam = AF_INET;
             socket_fd = get_server_address_and_connect_4(host, port);
         }
         else if (version == 6) {  // Getting server address IPv6.
+            fam = AF_INET6;
             socket_fd = get_server_address_and_connect_6(host, port);
         }
         else {  // Pick IP.
-            socket_fd = get_any_address(host, port);
+            socket_fd = get_any_address(host, port, &fam);
         }
         if (socket_fd < 0){  // There was an error while connecting.
             return 1;
         }
-
         // Setting non blocking socket.
         if (fcntl(socket_fd, F_SETFL, O_NONBLOCK) == -1) {
             close(socket_fd);
             fprintf(stderr, "ERROR: Couldn't set non-blocking socket.\n");
             return 1;
         }
+        int dest_port, local_port;  // Port numbers of client and server.
+        string local_ip, dest_ip;   // IP adresses of client and server.
+        if (automat) {
+            if (fam == AF_INET6) {  // If IP adress is IPv6.
+                if (get_data_6(socket_fd, &local_port, &local_ip, &dest_port, &dest_ip) == 1) {
+                    close(socket_fd);
+                    return 1;
+                }
+            }
+            else {  // If IP address is IPv4.
+                if (get_data_4(socket_fd, &local_port, &local_ip, &dest_port, &dest_ip) == 1) {
+                    close(socket_fd);
+                    return 1;
+                }
+            }
+        }
 
         // Creating first message to send to the server.
         string message("IAM");
         message += dir;
+        string rep_msg = message;    // Message to write to report.
         message += term;
         uint8_t to_send = message.size();  // Size of the message.
 
@@ -577,10 +631,10 @@ int main(int const argc, char* argv[]) {
         string played;              // Played card,
         uint8_t action = 1;         // Which message to get.
         uint8_t lewa = 0;           // Number of played turn.
+        uint8_t end_score = 0;      // How many score types were written.
         list<list<string>> tricks;  // Taken tricks.
         list<string> hand;          // Cards in client's hand.
         bool waiting = false;       // Waiting for user input.
-        bool total = false;         // Last recieved message was total.
 
         int poll_act;                           // Value returned from poll.
         struct pollfd poll_descriptors[2];      // Array of descriptors used in poll.
@@ -613,6 +667,9 @@ int main(int const argc, char* argv[]) {
                     }
                     to_send -= done;  // Amount of sent message.
                     if (to_send == 0) {  // Whole message was sent.
+                        if (automat) {   // If automatic player is playing.
+                            to_report(rep_msg, to_string(local_port), local_ip, to_string(dest_port),dest_ip);
+                        }
                         poll_descriptors[0].events = POLLIN;  // Looking for response
                     }
                     else {  // Couldn't send whole message.
@@ -627,8 +684,11 @@ int main(int const argc, char* argv[]) {
                         return 1;
                     }
                     if (ret == 1) {  // If whole message was read.
+                        if (automat) {  // If automatic player is playing.
+                            to_report(receiever, to_string(dest_port),dest_ip, to_string(local_port), local_ip);
+                        }
                         // Determines which action to do.
-                        uint8_t code = determine_action(&action, receiever, &hand, &lewa, &played, automat, &waiting, &tricks, &total, dir);
+                        uint8_t code = determine_action(&action, receiever, &hand, &lewa, &played, automat, &waiting, &tricks, dir, &end_score);
                         receiever = "";
                         if (code == 1) {  // Action forced quit.
                             close(socket_fd);
@@ -639,6 +699,7 @@ int main(int const argc, char* argv[]) {
                             message = "TRICK";
                             message += to_string(lewa);
                             message += played;
+                            rep_msg = message;
                             message += term;
                             to_send = message.size();
                             poll_descriptors[0].events = POLLOUT;  // Send message.
@@ -646,7 +707,7 @@ int main(int const argc, char* argv[]) {
                     }
                     else if (ret == 3) {
                         close(socket_fd);
-                        if (total) {
+                        if (end_score == 3) {
                             return 0;
                         }
                         fprintf(stderr, "ERROR: Server dismissed the connection.\n");
@@ -658,17 +719,17 @@ int main(int const argc, char* argv[]) {
                     getline(cin, recv);  // Getting the message.
                     if (recv == "cards") {    // User requested display of cards.
                         print_cards(hand);
-                        cout << "\n" << flush;
+                        cout << endl;
                     }
                     else if (recv == "tricks") {  // User requested display of taken cards.
                         for (list<string> trick: tricks) {  // Printing every trick.
                             auto iter = trick.begin();
-                            cout << *iter << flush;
+                            cout << *iter;
                             for (int i = 1; i < 4; i++) {
                                 ++iter;
-                                cout << ", " << *iter << flush;
+                                cout << ", " << *iter;
                             }
-                            cout << "\n" << flush;
+                            cout << endl;
                         }
                     }
                     else if(recv[0] == '!' && waiting) {  // User wanted to put card when requested.
@@ -686,6 +747,6 @@ int main(int const argc, char* argv[]) {
             }
         } while (true);
     }
-    cout << "ERROR: Invalid arguments.\n" << flush;
+    fprintf(stderr, "ERROR: Invalid argument values.\n");
     return 1;
 }
