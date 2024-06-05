@@ -9,6 +9,8 @@
 #include "common.h"
 using namespace std;
 string term("\r\n");
+
+
 // Receives messages using TCP protocol.
 string tcp_read(const int socket_fd, bool onr, uint8_t *ret){
     int got;
